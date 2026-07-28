@@ -7,9 +7,18 @@
   },
   "author": "",
   "license": "ISC",
-  "description": "",
   "dependencies": {
     "express": "^5.2.1",
     "swagger-ui-express": "^5.0.1"
-  }
+  },
+  "devDependencies": {},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rayricabar5/FlyRank-Projects.git"
+  },
+  "bugs": {
+    "url": "https://github.com/rayricabar5/FlyRank-Projects/issues"
+  },
+  "homepage": "https://github.com/rayricabar5/FlyRank-Projects#readme",
+  "description": ""
 }
