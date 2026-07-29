@@ -14,7 +14,7 @@ const SEED_TASKS = [
   { id: 3, title: "Do Homework in Digital Signal Processing", done: false }
 ];
 
-const tasks = [...SEED_TASKS.map((task) => ({ ...task }))];
+let tasks = [...SEED_TASKS.map((task) => ({ ...task }))];
 
 app.get("/", (req, res) => {
   res.json({
@@ -56,6 +56,71 @@ app.post("/tasks", (req, res) => {
 
   tasks.push(task);
   res.status(201).json(task);
+});
+
+app.put("/tasks/:id", (req, res) => {
+  const { title, done } = req.body;
+  const id = Number(req.params.id);
+
+  const task = tasks.find(task => task.id === id);
+
+  // Unknown ID
+  if (!task) {
+    return res.status(404).json({
+      error: "Unknown id"
+    });
+  }
+
+  // Empty body
+  if (title === undefined && done === undefined) {
+    return res.status(400).json({
+      error: "Empty/invalid body"
+    });
+  }
+
+  // Validate title if provided
+  if (title !== undefined) {
+    if (String(title).trim() === "") {
+      return res.status(400).json({
+        error: "Empty/invalid body"
+      });
+    }
+
+    task.title = title;
+  }
+
+  // Validate done if provided
+  if (done !== undefined) {
+    if (typeof done !== "boolean") {
+      return res.status(400).json({
+        error: "Empty/invalid body"
+      });
+    }
+
+    task.done = done;
+  }
+
+  // Return updated task
+  return res.json(task);
+});
+
+app.delete("/tasks/:id", (req, res) => {
+  const id = Number(req.params.id);
+
+  const task = tasks.find(task => task.id === id);
+
+  // Unknown id
+  if (!task) {
+    return res.status(404).json({
+      error: "Unknown id"
+    });
+  }
+
+  // Remove task
+  tasks = tasks.filter(task => task.id !== id);
+
+  // Success with empty body
+  return res.status(204).send();
 });
 
 app.listen(port, () => {
