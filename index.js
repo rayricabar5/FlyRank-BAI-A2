@@ -1,4 +1,6 @@
 const express = require('express');
+const swaggerUI = require("swagger-ui-express");
+const openapi = require("./openapi.json")
 const app = express();
 const port = 3000;
 
@@ -7,6 +9,7 @@ const port = 3000;
 // });
 
 app.use(express.json());
+app.use("/docs", swaggerUI.serve, swaggerUI.setup(openapi));
 
 const SEED_TASKS = [
   { id: 1, title: "Feed the Dog", done: false },
@@ -24,7 +27,7 @@ app.get("/", (req, res) => {
   })
 });
 
-app.get("health", (req, res) => {
+app.get("/health", (req, res) => {
   res.json({status: "ok"});
 });
 
