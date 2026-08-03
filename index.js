@@ -7,19 +7,18 @@ const app = express();
 const db = new Database("tasks.db");
 const port = 3000;
 
-// app.get('/', (req, res) => {
-//   res.send('Hello World!');
-// });
-
 app.use(express.json());
 app.use("/docs", swaggerUI.serve, swaggerUI.setup(openapi));
 
+//CONSTANT TASKS
 const SEED_TASKS = [
   { title: "Feed the Dog", done: 0 },
   { title: "Walk the Dog", done: 0 },
   { title: "Do Homework in Digital Signal Processing", done: 0 }
 ];
 
+
+//CREATE TABLE IF NOT EXISTS tasks
 db.exec(`
     CREATE TABLE IF NOT EXISTS tasks (
         id INTEGER PRIMARY KEY,
@@ -28,6 +27,7 @@ db.exec(`
     );
 `);
 
+//Prepare statements for database operations
 const getAllTasks = db.prepare (`SELECT * FROM tasks`);
 const getTask = db.prepare (`
   SELECT * FROM tasks WHERE id = ?
@@ -40,6 +40,8 @@ const table_size = db.prepare(`
     SELECT COUNT(*) as count FROM tasks
 `);
 
+
+//table initialization and seeding
 if (table_size.get().count === 0) {
     for (const task of SEED_TASKS) {
         add_tasks.run(task.title, task.done);
@@ -51,6 +53,7 @@ else {
 
 console.log("Table created!");
 
+//Health and status check
 app.get("/", (req, res) => {
   res.json({
     name: "Task API",
@@ -64,18 +67,19 @@ app.get("/health", (req, res) => {
 });
 
 app.get("/tasks", (req, res) => {
-  res.json(tasks);
+  const allTasks = getAllTasks.all();
+  res.json(allTasks);
 });
 
-// app.get("/tasks/:id", (req, res) => {
-//   const id = Number(req.params.id);
-//   const task = tasks.find((t) => t.id === id);
+app.get("/tasks/:id", (req, res) => {
+  const id = Number(req.params.id);
+  const specificTask = getTask.get(id);
 
-//   if (!task) {
-//     return res.status(404).json({ error: `Task ${id} not found` });
-//   }
-//   res.json(task);
-// });
+  if (!specificTask) {
+    return res.status(404).json({ error: `Task ${id} not found` });
+  }
+  res.json(specificTask);
+});
 
 // app.post("/tasks", (req, res) => {
 //   const {title} = req.body;
