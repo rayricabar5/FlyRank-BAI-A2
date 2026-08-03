@@ -36,6 +36,18 @@ const add_tasks = db.prepare(`
     INSERT INTO tasks (title, done)
     VALUES(?, ?)
 `);
+
+const updateTask = db.prepare(`
+    UPDATE tasks
+    SET title = ?,
+      done = ?
+    WHERE id = ?`);
+
+const deleteTask = db.prepare(`
+    DELETE FROM tasks
+    WHERE id = ?
+  `);
+
 const table_size = db.prepare(`
     SELECT COUNT(*) as count FROM tasks
 `);
@@ -66,6 +78,8 @@ app.get("/health", (req, res) => {
   res.json({status: "ok"});
 });
 
+//SHOW TASKS OR SPECIFIC TASK//
+
 app.get("/tasks", (req, res) => {
   const allTasks = getAllTasks.all();
   res.json(allTasks);
@@ -81,6 +95,8 @@ app.get("/tasks/:id", (req, res) => {
   res.json(specificTask);
 });
 
+//ADD TASKS//
+
 app.post("/tasks", (req, res) => {
   const {title} = req.body;
 
@@ -95,70 +111,66 @@ app.post("/tasks", (req, res) => {
   res.status(201).json({message: "new task added"});
 });
 
-// app.put("/tasks/:id", (req, res) => {
-//   const { title, done } = req.body;
-//   const id = Number(req.params.id);
+//UPDATE//
 
-//   const task = tasks.find(task => task.id === id);
+app.put("/tasks/:id", (req, res) => {
+  const { title, done } = req.body;
+  const id = Number(req.params.id);
 
-//   // Unknown ID
-//   if (!task) {
-//     return res.status(404).json({
-//       error: "Unknown id"
-//     });
-//   }
+  const task = getTask.get(id);
 
-//   // Empty body
-//   if (title === undefined && done === undefined) {
-//     return res.status(400).json({
-//       error: "Empty/invalid body"
-//     });
-//   }
+  if (!task) {
+      return res.status(404).json({
+          error: "Unknown id"
+      });
+  }
 
-//   // Validate title if provided
-//   if (title !== undefined) {
-//     if (String(title).trim() === "") {
-//       return res.status(400).json({
-//         error: "Empty/invalid body"
-//       });
-//     }
+  if (title === undefined && done === undefined) {
+    return res.status(400).json({
+      error: "Empty/invalid body"
+    });
+  }
 
-//     task.title = title;
-//   }
+  if (title !== undefined && String(title).trim() === "") {
+    return res.status(400).json({
+      error: "Empty/invalid body"
+    });
+  }
 
-//   // Validate done if provided
-//   if (done !== undefined) {
-//     if (typeof done !== "boolean") {
-//       return res.status(400).json({
-//         error: "Empty/invalid body"
-//       });
-//     }
+  if (done !== undefined && typeof done !== "boolean") {
+    return res.status(400).json({
+      error: "Empty/invalid body"
+    });
+  }
 
-//     task.done = done;
-//   }
+  const newTitle = title ?? task.title;
+  const newDone = done === undefined ? task.done : (done ? 1 : 0);
 
-//   // Return updated task
-//   return res.json(task);
-// });
+  updateTask.run(String(newTitle).trim(), newDone, id);
 
-// app.delete("/tasks/:id", (req, res) => {
-//   const id = Number(req.params.id);
+  return res.json(getTask.get(id));
+});
 
-//   const task = tasks.find(task => task.id === id);
+//DELETE TASK
 
-//   // Unknown id
-//   if (!task) {
-//     return res.status(404).json({
-//       error: "Unknown id"
-//     });
-//   }
+app.delete("/tasks/:id", (req, res) => {
+  const id = Number(req.params.id);
 
-//   // Remove task
-//   tasks = tasks.filter(task => task.id !== id);
+  const task = getTask.get(id);
 
-//   // Success with empty body
-//   return res.status(204).send();
-// });
+  // Unknown id
+  if (!task) {
+    return res.status(404).json({
+      error: "Unknown id"
+    });
+  }
+
+  // Remove task
+  deleteTask.run(id);
+
+  // Success with empty body
+  return res.status(204).send();
+});
 
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`);
